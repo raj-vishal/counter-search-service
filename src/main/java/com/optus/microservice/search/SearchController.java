@@ -1,5 +1,7 @@
 package com.optus.microservice.search;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,6 +29,7 @@ public class SearchController {
 		
 	}
 
+	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/counter-api/searchAll", method = RequestMethod.GET,headers="Accept=application/json")
 	public Map<String, Integer> searchAll(Model counts) {
 
@@ -41,17 +44,29 @@ public class SearchController {
 	 * @param queryString
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/counter-api/search", method = RequestMethod.POST,headers="Accept=application/json")
 	public Map<String, Integer> search(@RequestBody String queryString) {
 
 		RestTemplate remoteServiceInvoker = new RestTemplate();
 
 		// MOVE TO LOAD-DATA-SERVICE ///////////////
-		List<String> keyWordList = new ArrayList<String>(); 
-		List<String> KeyValueQuery = new ArrayList<String>(Arrays.asList(queryString.split(":")));
-		if (!KeyValueQuery.isEmpty()) {
-			keyWordList = new ArrayList(Arrays.asList(KeyValueQuery.get(KEYVALUEINDEX).split("\\W+")));
+		List<String> keyWordList = new ArrayList<String>();
+		try {
+
+			String queryDecoded = URLDecoder.decode(queryString, "UTF-8");
+			
+			List<String> KeyValueQuery = new ArrayList<String>(Arrays.asList(queryDecoded.split(":")));
+			
+			if (!KeyValueQuery.isEmpty()) {
+				keyWordList = new ArrayList(Arrays.asList(KeyValueQuery.get(KEYVALUEINDEX).split("\\W+")));
+			}
+			
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+
 		/////////////////////////////////////////////
 		
 		Map<String, Integer> counterMap = remoteServiceInvoker.getForObject("http://localhost:9002/wordCounter/"+ keyWordList, Map.class);
@@ -66,6 +81,7 @@ public class SearchController {
 	 * @param count
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/counter-api/top/{count}", method = RequestMethod.GET,headers="Accept=application/json")
 	public Map<String, Integer> wordsWithTopCount(@PathVariable("count") String count) {
 		
